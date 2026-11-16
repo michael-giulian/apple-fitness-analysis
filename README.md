@@ -65,13 +65,13 @@ The duration categories are:
 | Medium | 30 to under 60 minutes |
 | Long | 60 minutes or longer |
 
-![Workout Duration dashboard](screenshots/workout-duration-dashboard.png)
+![Workout Duration dashboard](tableau-dashboard-screenshots/workout-duration-dashboard.png)
 
 ### Calories & Heart Rate
 
 This dashboard compares recorded active calories and average heart rate across workout types. It also includes the ten workouts with the highest recorded active calories.
 
-![Calories and Heart Rate dashboard](screenshots/calories-heart-rate-dashboard.png)
+![Calories and Heart Rate dashboard](tableau-dashboard-screenshots/calories-heart-rate-dashboard.png)
 
 ## Findings
 
