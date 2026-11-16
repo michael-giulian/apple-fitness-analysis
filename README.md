@@ -51,7 +51,7 @@ I focused on these questions:
 
 This dashboard shows monthly workout totals, workout frequency by weekday, and the distribution of workouts by activity.
 
-![Workout Activity and Consistency dashboard](screenshots/workout-activity-dashboard.png)
+![Workout Activity and Consistency dashboard](tableau-dashboard-screenshots/workout-activity-dashboard.png)
 
 ### Workout Duration
 
