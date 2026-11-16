@@ -106,15 +106,15 @@ This dashboard compares recorded active calories and average heart rate across w
 | Folder | Contents |
 |---|---|
 | `sql` | Scripts for creating tables, loading data, and running the analysis |
-| `power-query` | Power Query code used to prepare the data |
+| `power-query-m` | Power Query code used to prepare the data |
 | `screenshots` | Images of the Tableau dashboards |
-| `tableau` | Tableau workbook files |
-| `data` | Any cleaned data included for sharing |
+| `tableau-dashboard-screenshots` | Tableau workbook files |
+| `data-clean` | Any cleaned data included for sharing |
 
 ## How to Reproduce the Analysis
 
 1. Export your data from Apple Health.
-2. Use the code in `power-query` as a starting point to prepare the workout and workout-statistics tables. Update the source file path to match your computer.
+2. Use the code in `power-query-m` as a starting point to prepare the workout and workout-statistics tables. Update the source file path to match your computer.
 3. Create an SQL Server database named `AppleFitness`.
 4. Run `sql/01_Create_Tables.sql` to create the final tables.
 5. Import the cleaned data into the staging tables expected by the loading script.
