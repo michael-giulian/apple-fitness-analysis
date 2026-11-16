@@ -113,13 +113,105 @@ This dashboard compares recorded active calories and average heart rate across w
 
 ## How to Reproduce the Analysis
 
-1. Export your data from Apple Health.
-2. Use the code in `power-query-m` as a starting point to prepare the workout and workout-statistics tables. Update the source file path to match your computer.
-3. Create an SQL Server database named `AppleFitness`.
-4. Run `sql/01_Create_Tables.sql` to create the final tables.
-5. Import the cleaned data into the staging tables expected by the loading script.
-6. Run `sql/02_Load_Tables.sql` to populate the final tables.
-7. Run the entire `sql/03_Analysis_Queries.sql` script in the same query window so its temporary tables remain available.
-8. Open the Tableau workbook and update its data connections to match your files or database.
+You will need Excel with Power Query, SQL Server, SQL Server
+Management Studio, and Tableau. Using your own Apple Health
+export will produce different results from those shown here.
 
-Using a different Apple Health export will produce different results. The preparation steps may also need adjustments to match the fields and activities in that export.
+### 1. Export your Apple Health data
+
+1. Open the Health app on your iPhone.
+2. Tap your profile picture or initials in the upper-right corner.
+3. Scroll down and tap Export All Health Data.
+4. Confirm the export and wait for it to finish.
+5. Save the ZIP file to a private location you can access from
+   your PC, such as your own iCloud Drive or OneDrive.
+6. Download the ZIP file to your PC.
+7. Right-click the ZIP file and select Extract All.
+8. Open the extracted folders and locate export.xml, usually
+   inside the apple_health_export folder.
+
+The complete export contains personal health information.
+Keep it private and do not upload it to a public GitHub repository.
+
+### 2. Prepare the data in Excel Power Query
+
+1. Open Excel and create a blank Power Query.
+2. Open the Advanced Editor.
+3. Use the cleaning code in the power-query-m folder.
+4. Update the source file path to point to your own export.xml file.
+5. Create the queries in dependency order: the workout query
+   before any lookup or statistics queries that reference it.
+6. Keep query names consistent with the references in the code.
+7. Review the date and activity filters. This project analyzes
+   selected workout types from 2024 and 2025.
+8. Refresh the queries and check the resulting tables.
+9. Load the cleaned workout and statistics tables into Excel
+   and save the workbook.
+
+Check that each workout has a unique Workout ID and that its
+related statistics use the same ID. Review missing values and
+confirm that dates, durations, and measurements have the
+appropriate data types.
+
+### 3. Create the SQL Server database
+
+1. Open SQL Server Management Studio and connect to your server.
+2. Open sql/01_Create_Tables.sql.
+3. Run the script once to create the AppleFitness database,
+   dbo.Workouts, and dbo.WorkoutStatistics.
+
+If these objects already exist, inspect them before proceeding
+instead of running the creation script again.
+
+### 4. Import the cleaned data into staging tables
+
+1. Export the two cleaned Excel tables to separate CSV files.
+2. In SQL Server Management Studio, right-click AppleFitness
+   and select Tasks > Import Flat File.
+3. Import the workout CSV as dbo.Workouts_Staging.
+4. Import the statistics CSV as dbo.WorkoutStatistics_Staging.
+5. Review the detected column names, data types, and null settings
+   before completing each import.
+
+The staging column names must match those referenced in
+02_Load_Tables.sql. Preserve missing measurements as NULL
+rather than replacing them with zero.
+
+### 5. Load the final tables
+
+1. Open sql/02_Load_Tables.sql.
+2. Run the entire script in the same query window.
+3. Compare the staging and final row counts shown in the results.
+
+This script is intended for an initial load into empty final
+tables. It stops if either final table already contains data.
+
+### 6. Run the analysis
+
+1. Open sql/03_Analysis_Queries.sql.
+2. Run the entire script from the beginning so its temporary
+   tables are available to the later queries.
+3. Review the results for workout frequency, duration,
+   monthly activity, calories, and heart rate.
+
+### 7. Review the Tableau dashboards
+
+1. Open the workbook in the tableau folder, if included.
+2. Update its Excel connection to your cleaned workbook.
+3. Confirm that workouts and statistics are related by Workout ID.
+4. Refresh the data.
+5. Apply the same date ranges and activity filters used in SQL.
+6. Compare the dashboard values with the SQL results.
+
+Dashboard images are available in the tableau-dashboard-screenshots folder.
+
+### Data limitations
+
+The original project has no available workout records for
+November and December 2025. These months are treated as missing
+data, not confirmed months with zero workouts.
+
+Missing measurements are not replaced with zero. Entries
+without valid dates are excluded from date-based analysis.
+
+
