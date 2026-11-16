@@ -1,15 +1,34 @@
-/* Populate the final tables from staging.
-   Explicit column lists map source values to destination columns
-   by position and avoid relying on SELECT * column order. */
+/*
+File: 02_Load_Tables.sql
+Project: Apple Fitness Workout Analysis
+Author: Michael Giulian
+
+Purpose:
+Copy cleaned data from staging into the final tables.
+
+Before running:
+- Create the database and final tables.
+- Import the cleaned data into both staging tables.
+- Confirm that both final tables are empty.
+
+Notes:
+- Explicit column lists match source and destination
+  values by position.
+- Workouts load before their related statistics.
+- If either insert fails, the transaction is rolled back.
+- This script does not clear or replace existing data.
+*/
 
 USE AppleFitness;
 GO
+
+-- Roll back the transaction for qualifying runtime errors.
 SET XACT_ABORT ON;
 
 BEGIN TRY
     BEGIN TRANSACTION;
 
-    /* This script is for an initial load into empty final tables. */
+    -- Stop if either final table already contains data.
     IF EXISTS (SELECT 1 FROM dbo.Workouts)
        OR EXISTS (SELECT 1 FROM dbo.WorkoutStatistics)
     BEGIN
@@ -18,9 +37,13 @@ BEGIN TRY
             1;
     END;
 
-/* Load workouts first because statistics reference their IDs.Copy workouts with the columns correctly matched. Leave WorkoutStatisticsID out of INSERT because
-it generates it via IDENTITY(1,1)*/
- INSERT INTO dbo.Workouts
+    -- =====================================================
+    -- LOAD WORKOUTS
+    -- =====================================================
+
+    -- Load workouts first because statistics reference
+    -- their WorkoutID values.
+    INSERT INTO dbo.Workouts
     (
         WorkoutID,
         WorkoutType,
@@ -33,9 +56,7 @@ it generates it via IDENTITY(1,1)*/
         WorkoutStartTimestamp,
         WorkoutEndTimestamp
     )
-
-   /*SELECT the following values to be copied from staging*/
-SELECT
+    SELECT
         WorkoutID,
         WorkoutType,
         DurationMinutes,
@@ -48,43 +69,53 @@ SELECT
         WorkoutEndTimestamp
     FROM dbo.Workouts_Staging;
 
+    -- =====================================================
+    -- LOAD WORKOUT STATISTICS
+    -- =====================================================
 
-/* SQL Server automatically generates WorkoutStatisticsID.Copy statistics with the columns correctly matched*/
-INSERT INTO dbo.WorkoutStatistics
-(
-WorkoutID,
-MetricType,
-WorkoutStartTimestamp,
-WorkoutEndTimestamp,
-MetricAverage,
-MetricMinimum,
-MetricMaximum,
-Unit,
-MetricTotal
-)
+    -- Omit WorkoutStatisticsID because SQL Server
+    -- generates it automatically using IDENTITY(1,1).
+    INSERT INTO dbo.WorkoutStatistics
+    (
+        WorkoutID,
+        MetricType,
+        WorkoutStartTimestamp,
+        WorkoutEndTimestamp,
+        MetricAverage,
+        MetricMinimum,
+        MetricMaximum,
+        Unit,
+        MetricTotal
+    )
+    SELECT
+        WorkoutID,
+        MetricType,
+        WorkoutStartTimestamp,
+        WorkoutEndTimestamp,
+        MetricAverage,
+        MetricMinimum,
+        MetricMaximum,
+        Unit,
+        MetricTotal
+    FROM dbo.WorkoutStatistics_Staging;
 
-SELECT
-WorkoutID,
-MetricType,
-WorkoutStartTimestamp,
-WorkoutEndTimestamp,
-MetricAverage,
-MetricMinimum,
-MetricMaximum,
-Unit,
-MetricTotal
-FROM dbo.WorkoutStatistics_Staging;
-
-COMMIT TRANSACTION;
+    -- Save both inserts when they finish successfully.
+    COMMIT TRANSACTION;
 END TRY
 BEGIN CATCH
+    -- Undo the load if a transaction is still active.
     IF @@TRANCOUNT > 0
         ROLLBACK TRANSACTION;
 
+    -- Display the original error.
     THROW;
 END CATCH;
 
-/* Compare staging and final row counts after a successful load. */
+-- =========================================================
+-- COMPARE ROW COUNTS
+-- =========================================================
+
+-- Each staging count should match its final-table count.
 SELECT
     'Workouts' AS TableName,
     (SELECT COUNT(*) FROM dbo.Workouts_Staging) AS StagingRows,
@@ -96,14 +127,3 @@ SELECT
     'WorkoutStatistics',
     (SELECT COUNT(*) FROM dbo.WorkoutStatistics_Staging),
     (SELECT COUNT(*) FROM dbo.WorkoutStatistics);
-
-
-/*Verify that the number or rows is correct for each table*/
-USE AppleFitness;
-GO
-
-SELECT COUNT(*) AS TotalWorkouts
-FROM dbo.Workouts;
-
-SELECT COUNT(*) AS TotalStatistics
-FROM dbo.WorkoutStatistics;

@@ -1,3 +1,35 @@
+/*
+File: 03_Analysis_Queries.sql
+Project: Apple Fitness Workout Analysis
+Author: Michael Giulian
+
+Purpose:
+Analyze recorded workouts from 2024 and 2025 and
+compare the results with the project's Tableau sheets.
+
+Analysis includes:
+- Workout counts and percentages by activity
+- Total workout time by year and combined
+- Workout frequency by weekday
+- Workout counts by duration category
+- Monthly workout totals
+- Active calories burned by workout type
+- Top 10 workouts by active calories, with average heart rate
+
+Notes:
+- Includes the nine workout types listed in the setup query.
+- November and December 2025 data is unavailable.
+- Missing measurements are not replaced with zero.
+- Uses temporary tables; does not change the source tables.
+
+Instructions:
+Run the entire script in the same query window.
+Requires the populated AppleFitness database.
+*/
+
+USE AppleFitness;
+GO
+
 
 USE AppleFitness;
 GO;
