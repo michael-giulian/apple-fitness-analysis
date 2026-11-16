@@ -1,0 +1,54 @@
+let
+    Source = Xml.Tables(File.Contents("C:\Users\mgiul\Downloads\export (1)\apple_health_export\export.xml")),
+    #"Changed Type" = Table.TransformColumnTypes(Source,{{"Attribute:locale", type text}}),
+    Workout = #"Changed Type"{0}[Workout],
+    #"Added WorkoutID" = Table.AddIndexColumn(Workout, "WorkoutID", 1, 1, Int64.Type),
+    #"Removed Other Columns" = Table.SelectColumns(#"Added WorkoutID",{"WorkoutID", "WorkoutStatistics", "Attribute:workoutActivityType", "Attribute:duration", "Attribute:durationUnit", "Attribute:sourceName", "Attribute:sourceVersion", "Attribute:device", "Attribute:creationDate", "Attribute:startDate", "Attribute:endDate"}),
+    #"Renamed Columns" = Table.RenameColumns(#"Removed Other Columns",{{"Attribute:workoutActivityType", "WorkoutType"}, {"Attribute:duration", "Duration"}, {"Attribute:durationUnit", "DurationUnit"}, {"Attribute:sourceName", "SourceName"}, {"Attribute:sourceVersion", "SourceVersion"}, {"Attribute:device", "Device"}, {"Attribute:creationDate", "CreationDate"}, {"Attribute:startDate", "StartDate"}, {"Attribute:endDate", "EndDate"}}),
+    #"Replaced Value" = Table.ReplaceValue(#"Renamed Columns","HKWorkoutActivityType","",Replacer.ReplaceText,{"WorkoutType"}),
+    #"Replaced Value1" = Table.ReplaceValue(#"Replaced Value","TraditionalStrengthTraining","Traditional Strength Training",Replacer.ReplaceText,{"WorkoutType"}),
+    #"Duplicated Column" = Table.DuplicateColumn(#"Replaced Value1", "StartDate", "StartDate - Copy"),
+    #"Removed Columns" = Table.RemoveColumns(#"Duplicated Column",{"StartDate - Copy"}),
+    #"Duplicated Column1" = Table.DuplicateColumn(#"Removed Columns", "StartDate", "StartDate - Copy"),
+    #"Renamed Columns1" = Table.RenameColumns(#"Duplicated Column1",{{"StartDate - Copy", "WorkoutDate"}}),
+    #"Extracted First Characters" = Table.TransformColumns(#"Renamed Columns1", {{"WorkoutDate", each Text.Start(_, 10), type text}}),
+    #"Renamed Columns2" = Table.RenameColumns(#"Extracted First Characters",{{"Duration", "DurationMinutes"}}),
+    #"Changed Type1" = Table.TransformColumnTypes(#"Renamed Columns2",{{"DurationMinutes", type number}}),
+    #"Added Custom" = Table.AddColumn(#"Changed Type1", "DurationFormatted", each [DurationMinutes]/1440),
+    #"Changed Type2" = Table.TransformColumnTypes(#"Added Custom",{{"DurationFormatted", type number}, {"WorkoutDate", type date}}),
+    #"Filtered Rows" = Table.SelectRows(#"Changed Type2", each [WorkoutDate] >= #date(2024, 1, 1) and [WorkoutDate] <= #date(2025, 12, 31)),
+    #"Changed Type3" = Table.TransformColumnTypes(#"Filtered Rows",{{"CreationDate", type datetimezone}, {"StartDate", type datetimezone}, {"EndDate", type datetimezone}}),
+    #"Renamed Columns3" = Table.RenameColumns(#"Changed Type3",{{"CreationDate", "CreationTimestamp"}}),
+    #"Removed Columns1" = Table.RemoveColumns(#"Renamed Columns3",{"Device"}),
+    #"Renamed Columns4" = Table.RenameColumns(#"Removed Columns1",{{"StartDate", "WorkoutStartTimestamp"}, {"EndDate", "WorkoutEndTimestamp"}}),
+    #"Removed Columns2" = Table.RemoveColumns(#"Renamed Columns4",{"WorkoutDate"}),
+    #"Changed Type4" = Table.TransformColumnTypes(#"Removed Columns2",{{"DurationFormatted", type duration}}),
+
+    #"Added Custom1" = Table.AddColumn(
+        #"Changed Type4",
+        "DurationDisplay",
+        each
+            if [DurationFormatted] = null then null
+            else
+                let
+                    TotalSeconds = Number.Round(Duration.TotalSeconds([DurationFormatted]), 0),
+                    Hours = Number.IntegerDivide(TotalSeconds, 3600),
+                    Minutes = Number.IntegerDivide(Number.Mod(TotalSeconds, 3600), 60),
+                    Seconds = Number.Mod(TotalSeconds, 60)
+                in
+                    Text.PadStart(Text.From(Hours), 2, "0") & ":" &
+                    Text.PadStart(Text.From(Minutes), 2, "0") & ":" &
+                    Text.PadStart(Text.From(Seconds), 2, "0")
+    ),
+
+    #"Reordered Columns" = Table.ReorderColumns(#"Added Custom1",{"WorkoutStatistics", "WorkoutType", "DurationMinutes", "DurationUnit", "SourceName", "SourceVersion", "CreationTimestamp", "WorkoutStartTimestamp", "WorkoutEndTimestamp", "DurationFormatted", "DurationDisplay", "WorkoutID"}),
+    #"Removed Columns3" = Table.RemoveColumns(#"Reordered Columns",{"DurationFormatted", "DurationDisplay"}),
+    #"Changed Type5" = Table.TransformColumnTypes(#"Removed Columns3",{{"WorkoutStartTimestamp", type datetime}, {"WorkoutEndTimestamp", type datetime}, {"CreationTimestamp", type datetime}}),
+    #"Added Custom2" = Table.AddColumn(#"Changed Type5", "MonthStart", each Date.StartOfMonth(Date.From([WorkoutStartTimestamp]))),
+    #"Changed Type6" = Table.TransformColumnTypes(#"Added Custom2",{{"MonthStart", type date}}),
+    #"Reordered Columns1" = Table.ReorderColumns(#"Changed Type6",{"WorkoutStatistics", "WorkoutID", "WorkoutType", "DurationMinutes", "DurationUnit", "SourceName", "SourceVersion", "CreationTimestamp", "WorkoutStartTimestamp", "WorkoutEndTimestamp", "MonthStart"}),
+    #"Removed Columns4" = Table.RemoveColumns(#"Reordered Columns1",{"DurationUnit"}),
+    #"Capitalized Each Word" = Table.TransformColumns(#"Removed Columns4",{{"SourceName", Text.Proper, type text}}),
+    #"Reordered Columns2" = Table.ReorderColumns(#"Capitalized Each Word",{"WorkoutStatistics", "WorkoutID", "WorkoutType", "DurationMinutes", "WorkoutStartTimestamp", "WorkoutEndTimestamp", "CreationTimestamp", "SourceName", "SourceVersion", "MonthStart"})
+in
+    #"Reordered Columns2"
