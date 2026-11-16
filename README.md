@@ -6,6 +6,23 @@ I created this project to explore my Apple Fitness workout records from 2024–2
 
 I wanted to better understand my workout habits, including which activities I recorded most often, how long my workouts lasted, and how my activity changed over time. I used Excel Power Query to prepare the data, SQL Server to analyze it, and Tableau to present the results.
 
+## Project Files
+
+### SQL Scripts
+These scripts create the database tables, load the cleaned data,
+and analyze the workouts.
+
+- [Create tables](sql/01_Create_Tables.sql)
+- [Load data](sql/02_Load_Tables.sql)
+- [Analyze workouts](sql/03_Analysis_Queries.sql)
+
+### Power Query
+These files contain the steps used to clean and prepare
+the Apple Fitness data in Excel.
+
+- [Workout cleaning code](power-query-m/workouts-cleaning.txt)
+- [Workout statistics cleaning code](power-query-m/workout-statistics-cleaning.txt)
+
 ## Tools Used
 
 | Tool | How I used it |
